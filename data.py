@@ -1,23 +1,25 @@
 import pandas as pd
 import numpy as np
-import preprocess
+from preprocess import PreProcessor
 
 all_data = pd.read_excel('data/rapoarte.xlsx')
 
 corpus = []
 
+pp = PreProcessor()
+
 for row in range(0, all_data.shape[0]):
     raport = all_data["Text Incident"][row]
-    raport = preprocess.to_lower(raport)
-    raport = preprocess.remove_symbols(raport)
-    raport = preprocess.remove_stopwords(raport)
-    raport = preprocess.remove_diacritics(raport)
-    raport = preprocess.remove_numbers(raport)
-    raport = preprocess.stem(raport)
+    raport = pp.to_lower(raport)
+    raport = pp.remove_symbols(raport)
+    raport = pp.remove_stopwords(raport)
+    raport = pp.remove_diacritics(raport)
+    raport = pp.remove_numbers(raport)
+    raport = pp.stem(raport)
     corpus.append(raport)
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-cv = TfidfVectorizer(max_features=3400)
+cv = TfidfVectorizer()
 
 response = cv.fit_transform(corpus)
 print(response)
@@ -31,7 +33,7 @@ from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state=0)
 
 from sklearn.svm import SVC
-classifier = SVC()
+classifier = SVC(kernel='rbf')
 classifier.fit(X_train, y_train)
 
 y_pred = classifier.predict(X_test)
