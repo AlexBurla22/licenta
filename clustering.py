@@ -1,26 +1,22 @@
-import pandas as pd
-import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from preprocess import PreProcessor
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import LinearSVC
+import pandas as pd
 
-classifier = LinearSVC()
-vectorizer = TfidfVectorizer()
+vectorizer = TfidfVectorizer(max_features=5000)
 pp = PreProcessor()
 corpus = []
 
-def predict_raport(text):
-    text = pp.to_lower(text)
-    text = pp.remove_symbols(text)
-    text = pp.remove_stopwords(text)
-    text = pp.remove_diacritics(text)
-    text = pp.remove_numbers(text)
-    text = pp.remove_nonwords(text)
-    text = pp.stem(text)
-    text_x = vectorizer.transform([text])
-    text_y = classifier.predict(text_x)
-    t = departs.loc[departs['cheie'] == text_y[0]]
-    return t
+def elbow_cluster(n_max):
+    WCSS = []
+    for i in range(1, n_max):
+        kmeans = KMeans(n_clusters=i, init="k-means++", random_state=99)
+        kmeans.fit(X)
+        WCSS.append(kmeans.inertia_)
+        print("clustering with: " + str(i) + " centroids")
+    return WCSS
 
 def read_all_csv(departs):
     all_files = pd.DataFrame(columns=['link', 'number', 'text', 'cheie_depart'])
@@ -39,7 +35,7 @@ def create_corpus(data):
         raport = pp.remove_stopwords(raport)
         raport = pp.remove_numbers(raport)
         raport = pp.remove_nonwords(raport)
-        #raport = pp.stem(raport)
+        raport = pp.stem(raport)
         corpus.append(raport)
 
 departs = pd.read_csv('data/departamente.csv')
@@ -55,17 +51,26 @@ with open('features.txt', 'w') as f:
         f.write(word + '\n')
 
 X = tfidf_vect.toarray()
-y = all_data.loc[:,'cheie_depart'].values
-y = [int(i) for i in y]
 
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.30, random_state=99)
+clus = KMeans(n_clusters=7, init="k-means++")
+clus.fit(X)
 
-classifier.fit(X_train, y_train)
-y_pred = classifier.predict(X_test)
+pca = PCA(n_components=2, random_state=99)
+reduced_f = pca.fit_transform(X)
 
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+reduced_cc = pca.transform(clus.cluster_centers_)
+plt.scatter(reduced_f[:,0], reduced_f[:,1], c=clus.predict(X), s=50)
+plt.scatter(reduced_cc[:, 0], reduced_cc[:,1], marker='x', s=120, c='b')
+plt.show()
 
-#print(confusion_matrix(y_test, y_pred))
-#print(accuracy_score(y_test, y_pred))
-print(classification_report(y_test, y_pred, target_names = departs['nume_departament']))
+order_centroids = clus.cluster_centers_.argsort()[:, ::-1]
+for i in range(7):
+        print("Cluster %d:" % i, end="")
+        for ind in order_centroids[i, :10]:
+            print(" %s" % names[ind], end="")
+        print()
+#plt.plot(range(1, 14), elbow_cluster(14))
+#plt.title('Elbow Method')
+#plt.xlabel('Number of clusters')
+#plt.ylabel('WCSS')
+#plt.show()
