@@ -59,8 +59,8 @@ pca = PCA(n_components=2, random_state=99)
 reduced_f = pca.fit_transform(X)
 
 reduced_cc = pca.transform(clus.cluster_centers_)
-plt.scatter(reduced_f[:,0], reduced_f[:,1], c=clus.predict(X), s=50)
-plt.scatter(reduced_cc[:, 0], reduced_cc[:,1], marker='x', s=120, c='b')
+plt.scatter(reduced_f[:,0], reduced_f[:,1], c=clus.predict(X), s=10)
+plt.scatter(reduced_cc[:, 0], reduced_cc[:,1], marker='x', s=60, c='b')
 plt.show()
 
 order_centroids = clus.cluster_centers_.argsort()[:, ::-1]

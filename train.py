@@ -39,7 +39,7 @@ def create_corpus(data):
         raport = pp.remove_stopwords(raport)
         raport = pp.remove_numbers(raport)
         raport = pp.remove_nonwords(raport)
-        #raport = pp.stem(raport)
+        raport = pp.stem(raport)
         corpus.append(raport)
 
 departs = pd.read_csv('data/departamente.csv')
