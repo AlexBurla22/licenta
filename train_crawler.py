@@ -51,14 +51,14 @@ def scrape_text(url):
 def get_last_number(department_key):
     path = 'data/rapoarte' + department_key + '.csv'
     if os.path.exists(path):
-        with open(path) as file:
+        with open(path, encoding='utf-8') as file:
             for i, line in enumerate(file):
                 if i == 1:
                     return line.split(',')[1]
     
     return 0
 
-def scrape():
+def scrape_for_train():
     url_to_scrape = url_incidents + '?status_key=11&department_key='
     driver.get(url_to_scrape)
 
@@ -71,9 +71,9 @@ def scrape():
     valori_departamente = []
     nume_departamente = []
     for valoare in valori:
-        if valoare['value'] != '31':
+        if valoare['value'] != '31' or valoare['value'] != '0':
         #print('0' if valoare['value'] == '' else valoare['value'], valoare.text)
-            valori_departamente.append('0' if valoare['value'] == '' else valoare['value'])
+            valori_departamente.append(valoare['value'])
             nume_departamente.append(valoare.text)
 
     depts = pd.DataFrame(
@@ -157,5 +157,5 @@ def scrape():
         sort_csv(val)
 
 login()
-scrape()
+scrape_for_train()
 logout()

@@ -5,14 +5,14 @@ from preprocess import PreProcessor
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 
-vectorizer = TfidfVectorizer(max_features=5000)
+vectorizer = TfidfVectorizer()
 pp = PreProcessor()
 corpus = []
 
 def elbow_cluster(n_max):
     WCSS = []
     for i in range(1, n_max):
-        kmeans = KMeans(n_clusters=i, init="k-means++", random_state=99)
+        kmeans = KMeans(n_clusters=i, init="k-means++", random_state = 22)
         kmeans.fit(X)
         WCSS.append(kmeans.inertia_)
         print("clustering with: " + str(i) + " centroids")
@@ -31,16 +31,18 @@ def create_corpus(data):
         raport = data['text'][row]
         raport = pp.to_lower(raport)
         raport = pp.remove_symbols(raport)
-        raport = pp.remove_diacritics(raport)
-        raport = pp.remove_stopwords(raport)
+        #raport = pp.remove_diacritics(raport)
         raport = pp.remove_numbers(raport)
         raport = pp.remove_nonwords(raport)
         raport = pp.stem(raport)
+        #raport = pp.lem(raport)
+        raport = pp.remove_diacritics(raport)
+        raport = pp.remove_stopwords(raport)
         corpus.append(raport)
 
 departs = pd.read_csv('data/departamente.csv')
 all_data = read_all_csv(departs.loc[:, 'cheie'])
-all_data = all_data.sample(frac = 1, random_state=99).reset_index(drop=True)
+all_data = all_data.sample(frac = 1, random_state = 22).reset_index(drop=True)
 
 create_corpus(all_data)
 tfidf_vect = vectorizer.fit_transform(corpus)
@@ -52,10 +54,10 @@ with open('features.txt', 'w') as f:
 
 X = tfidf_vect.toarray()
 
-clus = KMeans(n_clusters=7, init="k-means++")
+clus = KMeans(n_clusters=6, init="k-means++")
 clus.fit(X)
 
-pca = PCA(n_components=2, random_state=99)
+pca = PCA(n_components = 2, random_state = 22)
 reduced_f = pca.fit_transform(X)
 
 reduced_cc = pca.transform(clus.cluster_centers_)
@@ -64,13 +66,14 @@ plt.scatter(reduced_cc[:, 0], reduced_cc[:,1], marker='x', s=60, c='b')
 plt.show()
 
 order_centroids = clus.cluster_centers_.argsort()[:, ::-1]
-for i in range(7):
+for i in range(6):
         print("Cluster %d:" % i, end="")
-        for ind in order_centroids[i, :10]:
+        for ind in order_centroids[i, :6]:
             print(" %s" % names[ind], end="")
         print()
-#plt.plot(range(1, 14), elbow_cluster(14))
-#plt.title('Elbow Method')
-#plt.xlabel('Number of clusters')
-#plt.ylabel('WCSS')
-#plt.show()
+
+# plt.plot(range(1, 14), elbow_cluster(14))
+# plt.title('Elbow Method')
+# plt.xlabel('Number of clusters')
+# plt.ylabel('WCSS')
+# plt.show()

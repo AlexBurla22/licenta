@@ -1,12 +1,14 @@
 from nltk.stem.snowball import SnowballStemmer
 from unidecode import unidecode
 import re
+import spacy
 
 class PreProcessor():
     def __init__(self):
         with open('stopwords.txt') as f:
             self.ro_stopwords = f.read().splitlines()
         self.sn = SnowballStemmer(language='romanian')
+        self.nlp = spacy.load('ro_core_news_sm')
 
     def to_lower(self, data):
         return data.lower()
@@ -46,4 +48,11 @@ class PreProcessor():
         new_data = ""
         for word in data:
             new_data = new_data + self.sn.stem(word) + " "
+        return new_data
+    
+    def lem(self, data):
+        tokens = self.nlp(data)
+        new_data =''
+        for token in tokens:
+            new_data += token.lemma_.lower() + ' '
         return new_data
