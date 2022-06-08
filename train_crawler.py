@@ -27,7 +27,6 @@ def sort_csv(depart):
         reps = reps.sort_values(['number'], ascending = False)
         reps.to_csv(path, index=False)
 
-
 def login():
     driver.get(url_login)
     driver.find_element(By.ID, 'user_email').send_keys(email)
@@ -55,7 +54,6 @@ def get_last_number(department_key):
             for i, line in enumerate(file):
                 if i == 1:
                     return line.split(',')[1]
-    
     return 0
 
 def scrape_for_train():

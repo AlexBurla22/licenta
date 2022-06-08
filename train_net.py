@@ -8,8 +8,6 @@ import pickle
 from keras import Sequential
 #from keras.preprocessing.sequence import pad_sequences
 from keras.layers import Dense, Embedding, GlobalMaxPooling1D, Conv1D, GlobalAveragePooling1D
-from keras.layers import TextVectorization
-
 
 pp = PreProcessor()
 corpus = []
@@ -28,13 +26,12 @@ def create_corpus(data):
         raport = data['text'][row]
         raport = pp.to_lower(raport)
         raport = pp.remove_symbols(raport)
-        #raport = pp.remove_diacritics(raport)
         raport = pp.remove_numbers(raport)
         raport = pp.remove_nonwords(raport)
-        raport = pp.stem(raport)
-        #raport = pp.lem(raport)
         raport = pp.remove_diacritics(raport)
         raport = pp.remove_stopwords(raport)
+        #raport = pp.lem(raport)
+        raport = pp.stem(raport)
         corpus.append(raport)
 
 departs = pd.read_csv('data/departamente.csv')
@@ -48,7 +45,9 @@ le = preprocessing.LabelEncoder()
 
 labels = all_data.loc[:,'cheie_depart'].values
 encoded_labels = le.fit_transform(labels)
-
+with open('models/labels.pickle', 'wb') as handle:
+    pickle.dump(le, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(corpus, encoded_labels, test_size = 0.25)
 
@@ -95,10 +94,10 @@ history = model.fit(X_train, y_train,
                      validation_data=(X_test, y_test),
                      batch_size=10)
 
-#loss, accuracy = model.evaluate(X_train, y_train, verbose=False)
-#print("Training Accuracy: {:.4f}".format(accuracy))
-#loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
-#print("Testing Accuracy:  {:.4f}".format(accuracy))
+loss, accuracy = model.evaluate(X_train, y_train, verbose=False)
+print("Training Accuracy: {:.4f}".format(accuracy))
+loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
+print("Testing Accuracy:  {:.4f}".format(accuracy))
 
-#model.save('models/net')
+model.save('models/net')
 #model.fit(padded_reviews, labels, epochs=100, verbose=0)

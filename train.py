@@ -58,10 +58,10 @@ def create_corpus(data):
         #raport = pp.remove_diacritics(raport)
         raport = pp.remove_numbers(raport)
         raport = pp.remove_nonwords(raport)
-        raport = pp.stem(raport)
-        #raport = pp.lem(raport)
         raport = pp.remove_diacritics(raport)
         raport = pp.remove_stopwords(raport)
+        raport = pp.stem(raport)
+        #raport = pp.lem(raport)
         corpus.append(raport)
 
 departs = pd.read_csv('data/departamente.csv')
@@ -94,14 +94,14 @@ y2_pred = classifierNB.predict(X_test)
 
 save_model('models/vectorizer.sav', vectorizer)
 
-#save_model('models/linearSVM.sav', classifierSVM)
-#save_model('models/multinomialNB.sav', classifierNB)
+save_model('models/linearSVM.sav', classifierSVM)
+save_model('models/multinomialNB.sav', classifierNB)
 
 #print_classification_report(y_test, y_pred, departs['nume_departament'])
 #print_classification_report(y_test, y2_pred, departs['nume_departament'])
 
-#print_cross_validation(classifierSVM, X_train, y_train)
-#print_cross_validation(classifierNB, X_train, y_train)
+print_cross_validation(classifierSVM, X_train, y_train)
+print_cross_validation(classifierNB, X_train, y_train)
 
 #parameters = [{'C': np.linspace(0.1, 1, 10)}]
 #print_gridsearch(classifierSVM, parameters, X_train, y_train)
