@@ -108,16 +108,16 @@ def scrape_for_train():
             for raport in rapoarte:
                 media_div = raport.find('div', {'class': 'media'})
                 link = url_root + media_div.find('a', {'class': 'stretched-link'})['href']
-                number = media_div.find('div', {'class': 'col-lg-2 col-md-4 col-sm-4'}).find('p', {'class': 'mb-0'}).text
-                number = number[1:]
+                numar = media_div.find('div', {'class': 'col-lg-2 col-md-4 col-sm-4'}).find('p', {'class': 'mb-0'}).text
+                numar = numar[1:]
 
-                if number == numar_ultim_raport:
+                if numar == numar_ultim_raport:
                     not_scraped = False
                     break
 
                 #print(link, number, '0' if val[0] == '' else val[0])
                 lista_link.append(link)
-                lista_numar.append(number)
+                lista_numar.append(numar)
                 lista_text.append(scrape_text(link))
                 print('scraped ' + link)
 

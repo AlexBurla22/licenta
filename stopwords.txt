@@ -271,10 +271,11 @@ mod
 mult
 multa
 multe
-multi
 multă
 mulţi
+multi
 mulţumesc
+multumim
 mâine
 mîine
 mă
@@ -1320,3 +1321,6 @@ voicu
 zamfir
 zeno
 zaharia
+sibiu
+selimbar
+cibin

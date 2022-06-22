@@ -1,7 +1,11 @@
 import pickle
 import pandas as pd
 import numpy as np
+import firebase_admin
 import tensorflow
+import time
+import smtplib
+from email.mime.text import MIMEText
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
@@ -9,23 +13,23 @@ from keras.preprocessing.text import Tokenizer
 from keras import Sequential
 from keras.layers import Dense, Embedding, GlobalMaxPooling1D, Conv1D, GlobalAveragePooling1D
 from preprocess import PreProcessor
-import firebase_admin
 from firebase_admin import credentials, db
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
-import time 
-
+from collections import Counter
+from random import randint
+from unidecode import unidecode
 url_login = 'https://sibiu.eventya.eu/users/login'
 url_waiting = 'https://sibiu.eventya.eu/app/incidents/incidents?status_key=9'
 url_app = 'https://sibiu.eventya.eu/app'
 url_root = 'https://sibiu.eventya.eu'
 
-email=''
+email='alexandru.burla@ulbsibiu.ro'
+mail_test='test.crawler99@gmail.com'
 password=''
-db_URL = ''
+db_URL = 'https://crawlerdb-320d6-default-rtdb.europe-west1.firebasedatabase.app/'
 
 departs = pd.read_csv('data/departamente.csv')
 pp = PreProcessor()
@@ -46,15 +50,25 @@ net = tensorflow.keras.models.load_model('models/net')
 
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred, { 'databaseURL': db_URL})
-db_ref = db.reference('/ClassifiedReports')
+
+def write_departs_in_db():
+    db_ref=db.reference('/Departments')
+    for i in range(0, len(departs)):
+        db_obj = {
+            'departID': str(departs['cheie'][i]),
+            'departName': departs['nume_departament'][i],
+            'departMail': mail_test
+        }
+        db_ref.push(db_obj)
 
 def get_depart_name_by_key(key):
     return departs.loc[departs['cheie'] == key, 'nume_departament'].iloc[0]
 
 def scrape(url):
-    print('scraping...')
+    print('\nscraping links...')
     temp_reps=[]
     temp_reps_number=[]
+    db_ref = db.reference('/ClassifiedReports')
     db_content = db_ref.get()
     for depart in departs.loc[:, 'cheie']:
         driver.get(url+'&department_key=' + str(depart))
@@ -66,7 +80,7 @@ def scrape(url):
             if not is_number_in_database(db_content, number):
                 temp_reps_number.append(number)
                 temp_reps.append(link)     
-                print('scraped link for report nr. ', number)
+                print('--scraped link for report nr. ', number)
     return temp_reps, temp_reps_number
 
 def is_number_in_database(db_content, number):
@@ -103,9 +117,10 @@ def preprocess_raport(raport):
     return raport
 
 def process():
-    print('scraping text...')
+    print('\nscraping text...')
     reports_text.clear()
     for report in reports:
+        print('--scraping text from link ' + report)
         driver.get(report)
         time.sleep(2)
         text_divs = driver.find_element(By.ID, 'user_messages_container').find_elements(By.CLASS_NAME, 'list-group-item')
@@ -130,23 +145,78 @@ def classify():
     else:
         return [], [], []
 
-def write_to_db():
+def write_to_db(results):
+    db_ref = db.reference('/ClassifiedReports')
     if len(reports) > 0:
         for i in range(len(reports)):
             db_obj = { 'link': str(reports[i]),
                         'number': reports_number[i],
-                        'PredSVM': str(predsSVM[i]),
-                        'PredNB': str(predsNB[i]),
-                        'PredNET': str(predsNET[i]) }
+                        'departmentID' : str(results[i]) }
             db_ref.push(db_obj)
-    
-def send_emails():
-    yield
+
+def get_email_by_department_key(key):
+    db_ref=db.reference('/Departments')
+    db_cont=db_ref.get()
+    if not db_cont:
+        return ''
+    else:
+        for item in db_cont.items():
+            if item[1]['departID'] == key:
+                return str(item[1]['departMail'])
+    return ''
+
+def get_name_by_department_key(key):
+    db_ref=db.reference('/Departments')
+    db_cont=db_ref.get()
+    if not db_cont:
+        return ''
+    else:
+        for item in db_cont.items():
+            if item[1]['departID'] == key:
+                return str(item[1]['departName'])
+    return ''
+
+def send_emails(results):
+    for i in range(len(reports)):
+        time.sleep(3)
+        send_email(str(reports[i]), str(results[i]))
+
+def send_email(content, key):
+    sen='alexandru.burla@ulbsibiu.ro'
+    depart_name=get_name_by_department_key(key)
+    dest=get_email_by_department_key(key)
+    text="""\Buna ziua, \n\tA aparut o sesizare noua cu linkul:\n""" + content
+
+    m = MIMEText(text, 'plain')
+    m['To']=dest
+    m['From']=sen
+    m['Subject']='Sesizare noua pentru departament: ' + unidecode(depart_name)
+
+    s = smtplib.SMTP('localhost', 1025)
+    s.sendmail(sen, [dest], m.as_string())
+    print('Sent email to department: ' + depart_name + ' with email address: ' + dest)
+    s.quit()
+
+def predict(predSVM, predNB, predNET):
+    res = []
+    for i in range(len(reports)):
+        temp = Counter([predSVM[i], predNB[i], predNET[i]])
+        if len(temp.keys()) > 2:
+            res.append(list(temp.keys())[randint(0, 2)])
+        elif len(temp) < 2:
+            res.append(predNET[i])
+        else:
+            max_freq = max(temp.values())
+            res.append(list(temp.keys())[list(temp.values()).index(max_freq)])
+    return res
 
 login(url_login=url_login, email=email, password=password)
+write_departs_in_db()
 while True:
     reports, reports_number = scrape(url=url_waiting)
     process()
-    predsSVM, predsNB, predsNET=classify()
-    write_to_db()
-    send_emails()
+    predsSVM, predsNB, predsNET = classify()
+    results = predict(predsSVM, predsNB, predsNET)
+    write_to_db(results)
+    send_emails(results)
+    time.sleep(100)

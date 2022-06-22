@@ -8,7 +8,7 @@ class PreProcessor():
         with open('stopwords.txt') as f:
             self.ro_stopwords = f.read().splitlines()
         self.sn = SnowballStemmer(language='romanian')
-        self.nlp = spacy.load('ro_core_news_sm')
+        self.sp = spacy.load('ro_core_news_sm')
 
     def to_lower(self, data):
         return data.lower()
@@ -51,7 +51,7 @@ class PreProcessor():
         return new_data
     
     def lem(self, data):
-        tokens = self.nlp(data)
+        tokens = self.sp(data)
         new_data =''
         for token in tokens:
             new_data += token.lemma_.lower() + ' '
