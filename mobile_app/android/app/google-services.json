@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "119213200027",
+    "firebase_url": "https://crawlerdb-320d6-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "crawlerdb-320d6",
+    "storage_bucket": "crawlerdb-320d6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:119213200027:android:7a903e1eabb32652cf6c3e",
+        "android_client_info": {
+          "package_name": "com.example.mobile_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "119213200027-6sefq8e2n5c4fhvqecn3paadlp6d0l8g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcxYOSPmxFxWf--9oJ50tkVqi9vee9xRE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "119213200027-6sefq8e2n5c4fhvqecn3paadlp6d0l8g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "119213200027-quunbfs9o67rs7lsmsgjinrh532847p8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mobileApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -5,6 +5,7 @@ import firebase_admin
 import tensorflow
 import time
 import smtplib
+import datetime
 from email.mime.text import MIMEText
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
@@ -28,7 +29,7 @@ url_root = 'https://sibiu.eventya.eu'
 
 email='alexandru.burla@ulbsibiu.ro'
 mail_test='test.crawler99@gmail.com'
-password=''
+password='Doamna.stanca40'
 db_URL = 'https://crawlerdb-320d6-default-rtdb.europe-west1.firebasedatabase.app/'
 
 departs = pd.read_csv('data/departamente.csv')
@@ -37,6 +38,7 @@ pp = PreProcessor()
 reports = []
 reports_number = []
 reports_text = []
+reports_time = []
 options = Options()
 options.headless = True
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
@@ -68,20 +70,26 @@ def scrape(url):
     print('\nscraping links...')
     temp_reps=[]
     temp_reps_number=[]
+    temp_reps_date=[]
     db_ref = db.reference('/ClassifiedReports')
     db_content = db_ref.get()
     for depart in departs.loc[:, 'cheie']:
         driver.get(url+'&department_key=' + str(depart))
         time.sleep(2)
-        divs = driver.find_element(By.ID, 'list_incidents').find_elements(By.CLASS_NAME, 'list-group-item')
-        for div in divs:
-            number = int(div.find_element(By.TAG_NAME, 'p').text[1:])
-            link = div.find_element(By.TAG_NAME, 'a').get_attribute('href')
-            if not is_number_in_database(db_content, number):
-                temp_reps_number.append(number)
-                temp_reps.append(link)     
-                print('--scraped link for report nr. ', number)
-    return temp_reps, temp_reps_number
+        list_divs = driver.find_elements(By.ID, 'list_incidents')
+        if len(list_divs) > 0:
+            divs = list_divs[0].find_elements(By.CLASS_NAME, 'list-group-item')
+            for div in divs:
+                time.sleep(1.2)
+                number = int(div.find_element(By.TAG_NAME, 'p').text[1:])
+                link = div.find_element(By.TAG_NAME, 'a').get_attribute('href')
+                if not is_number_in_database(db_content, number):
+                    d=datetime.datetime.now()
+                    temp_reps_number.append(number)
+                    temp_reps.append(link)     
+                    temp_reps_date.append(d.strftime("%d %b %Y, %H:%M:%S"))
+                    print('--scraped link for report nr. ', number)
+    return temp_reps, temp_reps_number, temp_reps_date
 
 def is_number_in_database(db_content, number):
     if not db_content:
@@ -151,7 +159,10 @@ def write_to_db(results):
         for i in range(len(reports)):
             db_obj = { 'link': str(reports[i]),
                         'number': reports_number[i],
-                        'departmentID' : str(results[i]) }
+                        'departID' : str(results[i]),
+                        'departName': str(departs.loc[departs['cheie'] == results[i], 'nume_departament'].iloc[0]),
+                        'dateTime': str(reports_time[i]), }
+            time.sleep(0.2)
             db_ref.push(db_obj)
 
 def get_email_by_department_key(key):
@@ -213,7 +224,7 @@ def predict(predSVM, predNB, predNET):
 login(url_login=url_login, email=email, password=password)
 write_departs_in_db()
 while True:
-    reports, reports_number = scrape(url=url_waiting)
+    reports, reports_number, reports_time = scrape(url=url_waiting)
     process()
     predsSVM, predsNB, predsNET = classify()
     results = predict(predsSVM, predsNB, predsNET)
