@@ -29,7 +29,7 @@ url_root = 'https://sibiu.eventya.eu'
 
 email='alexandru.burla@ulbsibiu.ro'
 mail_test='test.crawler99@gmail.com'
-password='Doamna.stanca40'
+password=''
 db_URL = 'https://crawlerdb-320d6-default-rtdb.europe-west1.firebasedatabase.app/'
 
 departs = pd.read_csv('data/departamente.csv')
